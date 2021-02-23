@@ -26,7 +26,7 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 	private double multipleBombFactor = 0.8;
 	private Random rnd = new Random();
 	private BufferedImage red_flag_img = null;
-	private int rightEdge = 1, downEdge = 1;
+	private int rightEdge = 1, downEdge = 1, leftEdge = 0, upEdge = 0;
 
 	public Board() {
 		addMouseListener(this);
@@ -62,7 +62,9 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 		firstClick = true;
 		rightEdge = 1;
 		downEdge = 1;
-		setPreferredSize(new Dimension((rightEdge+5) * size,(downEdge+5) * size));
+		leftEdge = 0;
+		upEdge = 0;
+		setPreferredSize(new Dimension((rightEdge-leftEdge+5) * size,(downEdge-upEdge+5) * size));
 		revalidate();
 		this.repaint();
 
@@ -102,6 +104,8 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 			y += gridSpace;
 		}
 
+		int xOffset = - leftEdge*size;
+		int yOffset = - upEdge*size;
 		g.setFont(new Font("default", Font.BOLD, 16));
 		for (HashMap.Entry<Integer, HashMap<Integer, Tile>> entry : tiles.entrySet()) {
 			for (HashMap.Entry<Integer, Tile> innerEntry : entry.getValue().entrySet()) {
@@ -109,18 +113,18 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 				if (tile.isVisible()) {
 					if (tile.isBomb()) {
 						g.setColor(new Color(0xff0000));
-						g.fillRect((tile.getX() * size) + 1, (tile.getY() * size) + 1, (size - 1), (size - 1));
+						g.fillRect((tile.getX() * size) + 1+xOffset, (tile.getY() * size) + 1+yOffset, (size - 1), (size - 1));
 					}else if(tile.getNeighbouringBombs() > 0) {
 						g.setColor(new Color(0x0000ff));
-						g.fillRect((tile.getX() * size) + 1, (tile.getY() * size) + 1, (size - 1), (size - 1));
+						g.fillRect((tile.getX() * size) + 1+xOffset, (tile.getY() * size) + 1+yOffset, (size - 1), (size - 1));
 						g.setColor(new Color(0xffffff));
-						g.drawString(Integer.toString(tile.getNeighbouringBombs()), (tile.getX() * size) + 3, (tile.getY() * size) + size);
+						g.drawString(Integer.toString(tile.getNeighbouringBombs()), (tile.getX() * size) + 3+xOffset, (tile.getY() * size) + size+yOffset);
 					}else {
 						g.setColor(new Color(0xffffff));
-						g.fillRect((tile.getX() * size) + 1, (tile.getY() * size) + 1, (size - 1), (size - 1));
+						g.fillRect((tile.getX() * size) + 1+xOffset, (tile.getY() * size) + 1+yOffset, (size - 1), (size - 1));
 					}
 				}else if (tile.isMarked()){
-					g.drawImage(red_flag_img, (tile.getX() * size) + 1,(tile.getY() * size) + 1, (size - 1), (size - 1), null);
+					g.drawImage(red_flag_img, (tile.getX() * size) + 1+xOffset,(tile.getY() * size) + 1+yOffset, (size - 1), (size - 1), null);
 				}
 
 			}
@@ -168,6 +172,12 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 					if(downEdge < y+1){
 						downEdge = y+1;
 					}
+					if(leftEdge > x-1){
+						leftEdge = x-1;
+					}
+					if(upEdge > y-1){
+						upEdge = y-1;
+					}
 					for(int x_ = x-1; x_ < x+2; x_++){
 						for(int y_ = y-1; y_ < y+2; y_++){
 							if(x_ != x || y_ != y) {
@@ -204,9 +214,18 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 	}
 
 	public void mouseClicked(MouseEvent e) {
-		int x = e.getX() / size;
-		int y = e.getY() / size;
-		//System.out.println("Mouse clicked at: "+x + ", "+y + "\nButton pressed: " + e.getButton());
+		int x;
+		int y;
+		if(e.getWhen() == 0){
+			x = e.getX() / size;
+			y = e.getY() / size;
+		}else {
+			int xOffset = leftEdge*size;
+			int yOffset = upEdge*size;
+			x = (int)Math.floor((e.getX()+xOffset) / (double)size);
+			y = (int)Math.floor((e.getY()+yOffset) / (double)size);
+		}
+		System.out.println("Mouse clicked at: "+x + ", "+y + "\nButton pressed: " + e.getButton());
 		if(firstClick && e.getButton() == 1){
 			rightEdge = x + 1;
 			downEdge = y + 1;
@@ -226,7 +245,7 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 				}
 			}
 			System.out.println("Clicked the first cells");
-			setPreferredSize(new Dimension((rightEdge+5) * size,(downEdge+5) * size));
+			setPreferredSize(new Dimension((rightEdge-leftEdge+5) * size,(downEdge-upEdge+5) * size));
 			revalidate();
 			this.repaint();
 			System.out.println("Repainted");
@@ -250,7 +269,7 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 							tiles.get(x).get(y).rightClicked();
 						}
 					}
-					setPreferredSize(new Dimension((rightEdge+5) * size,(downEdge+5) * size));
+					setPreferredSize(new Dimension((rightEdge-leftEdge+5) * size,(downEdge-upEdge+5) * size));
 					revalidate();
 					this.repaint();
 				}
@@ -265,7 +284,7 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 		int dlugosc = (this.getWidth() / size) + 1;
 		int wysokosc = (this.getHeight() / size) + 1;
 		initialize(dlugosc, wysokosc);
-		setPreferredSize(new Dimension((rightEdge+5) * size,(downEdge+5) * size));
+		setPreferredSize(new Dimension((rightEdge-leftEdge+5) * size,(downEdge-upEdge+5) * size));
 	}
 
 	public void mouseDragged(MouseEvent e) {

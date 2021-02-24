@@ -160,8 +160,10 @@ public class SolverBase {
                             if(t.getNeighbouringBombs() - markedBombs == 2 && undiscovered - connected == 1){
                                 for (Tile n : t.getNeighbours()) {
                                     if(!n.isVisible() && !n.isMarked() && !multiTile.contains(n)){
-                                        System.out.println("Found a safe move with the third rule! At point: ("+t.getX()+", "+t.getY()+").");
-                                        safeRightClicks.add(n);
+                                        if(!safeRightClicks.contains(n)) {
+                                            System.out.println("Found a safe move (bomb) with the third rule! At point: ("+n.getX()+", "+n.getY()+").");
+                                            safeRightClicks.add(n);
+                                        }
                                         break;
                                     }
                                 }

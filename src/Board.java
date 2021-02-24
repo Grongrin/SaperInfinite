@@ -23,7 +23,7 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 	private int size = 14;
 	private boolean firstClick = true;
 	private double isBombChance = 0.2;
-	private double multipleBombFactor = 0.8;
+	private double multipleBombFactor = 0.9;
 	private Random rnd = new Random();
 	private BufferedImage red_flag_img = null;
 	private int rightEdge = 1, downEdge = 1, leftEdge = 0, upEdge = 0;
@@ -84,6 +84,14 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 		drawNetting(g, size);
 	}
 
+	private int getXOffset(){
+		return (- leftEdge+2)*size;
+	}
+
+	private int getYOffset(){
+		return (- upEdge+2)*size;
+	}
+
 	// draws the background netting
 	private void drawNetting(Graphics g, int gridSpace) {
 		Insets insets = getInsets();
@@ -104,8 +112,8 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 			y += gridSpace;
 		}
 
-		int xOffset = - leftEdge*size;
-		int yOffset = - upEdge*size;
+		int xOffset = getXOffset();
+		int yOffset = getYOffset();
 		g.setFont(new Font("default", Font.BOLD, 16));
 		for (HashMap.Entry<Integer, HashMap<Integer, Tile>> entry : tiles.entrySet()) {
 			for (HashMap.Entry<Integer, Tile> innerEntry : entry.getValue().entrySet()) {
@@ -220,12 +228,13 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 			x = e.getX() / size;
 			y = e.getY() / size;
 		}else {
-			int xOffset = leftEdge*size;
-			int yOffset = upEdge*size;
-			x = (int)Math.floor((e.getX()+xOffset) / (double)size);
-			y = (int)Math.floor((e.getY()+yOffset) / (double)size);
+//			int xOffset = leftEdge*size;
+//			int yOffset = upEdge*size;
+			x = (int)Math.floor((e.getX()-getXOffset()) / (double)size);
+			y = (int)Math.floor((e.getY()-getYOffset()) / (double)size);
+			System.out.println("Mouse clicked at: ("+x + ", "+y + "); Button pressed: " + e.getButton());
 		}
-		System.out.println("Mouse clicked at: "+x + ", "+y + "\nButton pressed: " + e.getButton());
+
 		if(firstClick && e.getButton() == 1){
 			rightEdge = x + 1;
 			downEdge = y + 1;
@@ -267,6 +276,9 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 							click(x, y);
 						}else if(e.getButton() == 3){
 							tiles.get(x).get(y).rightClicked();
+							if(e.getWhen() == 0 && !tiles.get(x).get(y).isBomb()){
+								System.out.println("Solver made a mistake! - Marked ("+x+", "+y+") as a bomb, while it is not!");
+							}
 						}
 					}
 					setPreferredSize(new Dimension((rightEdge-leftEdge+5) * size,(downEdge-upEdge+5) * size));
